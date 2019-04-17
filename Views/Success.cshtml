@@ -1,0 +1,47 @@
+﻿@model int
+@{
+
+    Layout = "~/Views/Shared/_LayoutSecondaryPages.cshtml";
+
+    ViewBag.BannerClass = "port-corporate-background";
+    ViewBag.Title = "Equity Stories - Successfully Submitted";
+    ViewBag.ActionLink = Html.ActionLink("Equity Stories", "Index", "EquityStories");
+}
+
+@section styles{
+    @Styles.Render("~/Content/port-projectrequest.css")
+
+    <style>
+    .buttons-large-centered {
+        text-align: center;
+    }
+    .buttons-large-centered > a {
+
+        height: 45px;
+        width: auto;
+                
+        font-size: 18px;
+        line-height: 28px;
+    }
+    .view-request {
+        font-size: 24px;
+        text-decoration: underline;
+    }
+    </style>
+}
+
+<div class="project-request-content">
+
+    <div class="row">
+        <div class="col-lg-push-1 col-lg-10 col-sm-12">
+            <p class="page-title">
+                Thanks for submitting your equity story. We’ll review your submission and notify you if additional information is needed. Your story will be live once it has been approved.
+            </p>
+        </div>
+    </div>
+    <div class="buttons-large-centered">
+        <a href="@Url.Action("Index", "EquityStories")" class="btn btn-info">Return to Equity Stories</a>
+        <a href="@Url.Action("View", new {id = Model})" class="btn btn-success">View Your Equity Story</a>
+    </div>
+</div>
+

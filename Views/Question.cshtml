@@ -1,0 +1,180 @@
+﻿@using Navigator.Client.Helpers
+@using Navigator.Contracts.Models
+@using Navigator.Client.Models.ViewModels
+
+
+@model EquityQuestionTemplateContract
+@{
+    /**/
+
+    var create = ViewBag.AddQuestion ? "Add Question" : "Edit Question";
+    ViewBag.Title = ViewBag.AddQuestion ? "Equity Stories - Add Question" : "Equity Stories - Edit Question";
+    ViewBag.ActionLink = Html.ActionLink("Equity Stories", "Admin", "EquityStories");
+    ViewBag.BannerClass = "port-land-background";
+    Layout = "~/Views/Shared/_LayoutSecondaryPages.cshtml";
+    var employees = ViewBag.Employees as List<EmployeeViewModel> ?? new List<EmployeeViewModel>();
+
+
+}
+
+@section Styles{
+    @*jquery-ui.js needs to be instantiated before bootstrap.js*@
+    @Scripts.Render("~/bundles/jqueryui")
+    @Styles.Render("~/Content/select2.min.css")
+    @Scripts.Render("~/Scripts/select2.min.js")
+    <link href="~/Content/port-askmeanything.css" rel="stylesheet" />
+
+    <style>
+        textarea.form-control {
+            resize: none;
+            height: 2.8em;
+        }
+
+        .response .ess-questions {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        ess-primary-question, #AskQuestion {
+            clear: both;
+        }
+
+        #ess-question-form .questions {
+            font-size: 14px;
+            padding: 0;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        .add {
+            margin-top: 10px;
+        }
+
+        #ess-question-form .row {
+            margin: 15px 0;
+        }
+
+        #ess-msg {
+            color: #1168a2;
+            padding: 5px 15px;
+            border: 1px solid lightgray;
+        }
+
+        .checkbox {
+            padding: 5px 30px;
+        }
+
+        .new-question {
+            margin: 15px 0 3px 0;
+        }
+
+        #ess-question-submit-btn, #ess-question-save-btn, #ess-story-save-btn, #ess-story-submit-btn {
+            margin: 10px 0 15px 0;
+        }
+
+        #ess-cancel-btn {
+            margin: 0 10px;
+        }
+
+        @@media (min-width: 768px) {
+            #ess-question-submit-btn, #ess-question-again-btn, #ess-question-save-btn, #ess-story-save-btn, #ess-cancel-btn, #ess-story-submit-btn {
+                float: right;
+            }
+        }
+
+        @@media (max-width: 767px) {
+            #ess-question-submit-btn,
+            #ess-question-again-btn,
+            #ess-question-save-btn,
+            #ess-story-save-btn,
+            #ess-cancel-btn {
+                width: 100% !important;
+            }
+        }
+    </style>
+
+}
+<div class="row">
+    <div class="col-lg-push-1 col-lg-10">
+        <p>
+            <b>As we embark on our equity journey, we’re sharing success stories along the way. </b>
+        </p>
+
+        <p>
+            <b>If your division, department or team has committed to an action that’s driving forward equity at the Port, we want to hear about it! Tell us about the challenges you’ve overcome, the lessons you’ve learned and the results you’ve seen by filling out the form below.</b>
+        </p>
+    </div>
+</div><br />
+
+<hr />
+<div class="row">
+    <div class="col-lg-push-1 col-lg-10">
+        <nav class="nav sub-nav">
+            <div class="btn-group">
+                @*<button type="button" class="btn btn-info" onclick="window.history.back();">
+                        <span class="fa fa-caret-left"></span><span> Back</span>
+                    </button>*@
+                <a class="btn btn-info" id="ess-back-btn" href="@Url.Action("AdminQuestions", "EquityStories")"><span class="fa fa-caret-left"></span><span> Back</span></a>
+            </div>
+            <div class="btn-group pull-right">
+                @if (Html.IsAdministrator() && Model.Id != 0)
+                {
+                    if (Model.IsActive)
+                    {
+                        <button type="button" class="btn btn-success question-status-btn" title="Click to toggle" data-Stories-id="@Model.Id" data-stories-public="@Model.IsActive">Live</button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-danger question-status-btn" title="Click to toggle" data-Stories-id="@Model.Id" data-stories-public="@Model.IsActive">Not Live</button>
+                    }
+                }
+            </div>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-push-1 col-lg-10">
+        @using (Html.BeginForm("CreateQuestion", "EquityStories", FormMethod.Post))
+        {
+            @Html.AntiForgeryToken()
+
+            <h1 class="port-corporate-text">@create</h1>
+            <div class="row">
+                <div class="row">
+                    <div class="col-sm-4 col-sm-push-0">
+                        @Html.HiddenFor(model => model.CreatedBy)
+                        @Html.HiddenFor(model => model.Id)
+                        @Html.HiddenFor(model => model.IsActive)
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-10">
+                        <div class="add">
+                            <div class="ess-questions">
+                                @Html.LabelFor(model => model.Question, new { @class = "control-label " })
+                                @Html.TextAreaFor(model => model.Question, new { @class = "form-control" })
+                                @Html.ValidationMessageFor(model => model.Question, "", new { @class = "text-danger question" })
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr />
+            </div>
+            <div class="btn-group-inline pull-right">
+                <button type="submit" class="btn btn-success">Save</button>
+                <a class="btn btn-danger" id="ess-cancel-btn" href="@Url.Action("AdminQuestions", "EquityStories")">Cancel</a>
+            </div>
+        }
+    </div>
+</div>
+
+@{Html.RenderPartial("Modals/_SelectEmployeeModal", employees);}
+@section Scripts{
+    @Scripts.Render("~/bundles/ckeditor")
+    @Scripts.Render("~/bundles/blockUI")
+    @Scripts.Render("~/Scripts/port-utilities.js")
+    @Scripts.Render("~/Scripts/port-equitystories.js")
+    @Scripts.Render("~/Scripts/port-equity-admin.js")
+
+}

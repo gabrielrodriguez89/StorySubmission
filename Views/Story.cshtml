@@ -1,0 +1,504 @@
+﻿@using Navigator.Client.Helpers
+@using Navigator.Client.Models.ViewModels
+@using Navigator.Contracts.Models
+@using Newtonsoft.Json;
+
+@model EquityStoryContract
+@{
+    var create = ViewBag.AddStory ? true : false;
+    ViewBag.Title = create ? "Equity Stories - Submit Story" : "Equity Stories - Edit Story";
+    ViewBag.ActionLink = create ? Html.ActionLink("Equity Stories", "Index", "EquityStories") : Html.ActionLink("Equity Stories", "Admin", "EquityStories");
+    ViewBag.BannerClass = "port-land-background";
+    Layout = "~/Views/Shared/_LayoutSecondaryPages.cshtml";
+    var employees = ViewBag.Employees as List<EmployeeViewModel> ?? new List<EmployeeViewModel>();
+
+    var attachment = Model.ImgThumb == null ? "" : Model.ImgThumb;
+
+}
+
+@section Styles{
+
+    @Scripts.Render("~/bundles/jqueryui")
+    @Styles.Render("~/Content/select2.min.css")
+    @Scripts.Render("~/Scripts/select2.min.js")
+    @Styles.Render("~/content/ckeditor")
+    @Styles.Render("~/Content/azure-storage-plugin")
+    @Styles.Render("~/Content/port-askmeanything.css")
+
+    <style>
+        textarea.form-control.create {
+            resize: none;
+            height: 2.8em;
+            overflow: hidden;
+        }
+        textarea.form-control.edit {
+            resize: none;
+            min-height: 2.8em;
+            overflow: visible;
+        }
+        #questions {
+            padding: 15px 0;
+        }
+        table.ess-story {
+            width: 100%;
+        }
+        .response .ess-questions {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        ess-primary-question, #AskQuestion {
+            clear: both;
+        }
+        #ess-question-form #questions {
+            font-size: 14px;
+            padding: 0;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+        .add {
+            margin-top: 10px;
+        }
+        #ess-question-form .row {
+            margin: 15px 0;
+        }
+        #ess-msg {
+            color: #1168a2;
+            padding: 5px 15px;
+            border: 1px solid lightgray;
+        }
+        .checkbox {
+            padding: 5px 30px;
+        }
+        .new-question {
+            margin: 15px 0 3px 0;
+        }
+        #ess-question-submit-btn,
+        #ess-question-save-btn,
+        #ess-story-save-btn,
+        #ess-story-submit-btn {
+            margin: 10px 0 15px 0;
+        }
+        #ess-cancel-btn,
+        #ess-revert-btn,
+        #ess-story-edit-save-btn {
+            margin: 10px 10px 15px 0;
+        }
+        #ess-revert-btn > span,
+        #ess-story-edit-save-btn > span {
+            padding: 5px;
+        }
+        @@media (min-width: 768px) {
+            #ess-question-submit-btn,
+            #ess-question-again-btn,
+            #ess-question-save-btn,
+            #ess-story-save-btn,
+            #ess-cancel-btn,
+            #ess-story-submit-btn,
+            #ess-story-edit-save-btn {
+                float: right;
+            }
+        }
+        @@media (max-width: 767px) {
+            #ess-story-edit-save-btn,
+            #ess-question-submit-btn,
+            #ess-question-again-btn,
+            #ess-question-save-btn,
+            #ess-story-save-btn,
+            #ess-cancel-btn {
+                width: 100% !important;
+            }
+        }
+    </style>
+}
+<div class="row">
+    <div class="col-lg-push-1 col-lg-10">
+        <p>
+            As we embark on our equity journey, we’re sharing success stories along the way. If your division, department or team has committed to an action that’s driving forward equity at the Port, we want to hear about it!
+        </p>
+        <p>
+            Tell us about the challenges you’ve overcome, the lessons you’ve learned and the results you’ve seen by filling out the form below.
+        </p>
+    </div>
+</div><br />
+<hr />
+<div class="row">
+    <div class="col-lg-push-1 col-lg-10">
+        <nav class="nav sub-nav">
+            <div class="btn-group">
+                <button type="button" class="btn btn-info" onclick="window.history.back();">
+                    <span class="fa fa-caret-left"></span><span> Back</span>
+                </button>
+            </div>
+            <div class="btn-group pull-right">
+                @if (Html.IsAdministrator() && Model.Id != 0)
+                {
+                    if (Model.IsActive)
+                    {
+                        <button type="button" class="btn btn-success stories-status-btn" title="Click to toggle" data-Stories-id="@Model.Id" data-stories-public="@Model.IsActive">Live</button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-danger stories-status-btn" title="Click to toggle" data-Stories-id="@Model.Id" data-stories-public="@Model.IsActive">Not Live</button>
+                    }
+                }
+            </div>
+        </nav>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-push-1 col-lg-10">
+        @if (Model.Questions.Count() != 0)
+        {
+            if (create)
+            {
+                using (Html.BeginForm("CreateStory", "EquityStories", FormMethod.Post, new { enctype = "multipart/form-data", id = "ess-question-form" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <div class="row">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                @Html.LabelFor(model => model.Title, new { @class = "control-label" })
+                                @Html.EditorFor(model => model.Title, new { htmlAttributes = new { @class = "form-control" } })
+                                @Html.ValidationMessageFor(model => model.Title, "", new { @class = "title text-danger" })
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                @Html.LabelFor(model => model.Description, new { @class = "control-label" })
+                                @Html.EditorFor(model => model.Description, new { htmlAttributes = new { @class = "form-control" } })
+                                @Html.ValidationMessageFor(model => model.Description, "", new { @class = "description text-danger" })
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-4">
+                                @Html.LabelFor(model => model.ContactName, new { @class = "control-label " })
+                                <div class="input-group">
+                                    @Html.EditorFor(model => model.ContactName, new { htmlAttributes = new { @class = "form-control" } })
+                                    <span class="input-group-addon">
+                                        <a class="glyphicon glyphicon-user" aria-hidden="true" href="#" data-toggle="modal" data-target="#SelectEmployeeModal"></a>
+                                    </span>
+                                </div>
+                                @Html.ValidationMessageFor(model => model.ContactName, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            @Html.HiddenFor(model => model.UserName)
+                            @Html.HiddenFor(model => model.ContactEmail)
+                            @Html.HiddenFor(model => model.ContactPhone)
+                            @Html.HiddenFor(model => model.PublishDate)
+
+                        </div>
+                    </div>
+                    <hr />
+                    for (var i = 0; i < Model.Questions.Count(); i++)
+                    {
+                        <div class="ess-primary-question">
+                            <div class="row">
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <div id="questions">
+                                            <b>@Model.Questions[i].QuestionText</b>
+                                        </div>
+
+                                        @Html.HiddenFor(model => Model.Questions[i].QuestionText)
+
+                                        @Html.TextAreaFor(model => Model.Questions[i].AnswerText, new { @class = "form-control create" })
+                                        @Html.ValidationMessageFor(model => Model.Questions[i].AnswerText, "", new { @class = "text-danger " })
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="btn-group-inline pull-right">
+                                <button type="submit" class="btn btn-success" id="ess-story-submit-btn">Submit</button>
+                                <a class="btn btn-danger" id="ess-cancel-btn" href="@Url.Action("Index", "EquityStories")">Cancel</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                if (Model.Id != 0)
+                {
+                    using (Html.BeginForm("EditStory", "EquityStories", FormMethod.Post, new { enctype = "multipart/form-data", id = "edit-story-form" }))
+                    {
+
+                        @Html.AntiForgeryToken()
+                        @Html.HttpMethodOverride(HttpVerbs.Put)
+
+                        <div class="row">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    @Html.LabelFor(model => model.Title, new { @class = "control-label" })
+                                    @Html.EditorFor(model => model.Title, new { htmlAttributes = new { @class = "form-control" } })
+                                    @Html.ValidationMessageFor(model => model.Title, "", new { @class = "title text-danger" })
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    @Html.LabelFor(model => model.Description, new { @class = "control-label" })
+                                    @Html.EditorFor(model => model.Description, new { htmlAttributes = new { @class = "form-control" } })
+                                    @Html.ValidationMessageFor(model => model.Description, "", new { @class = "description text-danger" })
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-12" id="datepicker">
+                                    @Html.LabelFor(model => model.PublishDate, new { @class = "control-label" })
+                                    <input class="form-control" data-val="true" data-val-date="The field Publish Date must be a date." data-val-required="The Publish Date field is required." id="PublishDate" name="PublishDate" placeholder="" type="text" value="@Model.PublishDate.ToShortDateString()">
+                                    @Html.ValidationMessageFor(model => model.PublishDate, "", new { @class = "description text-danger " })
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                @Html.HiddenFor(model => model.ContactName)
+                                @Html.HiddenFor(model => model.UserName)
+                                @Html.HiddenFor(model => model.ContactEmail)
+                                @Html.HiddenFor(model => model.ContactPhone)
+                                @Html.HiddenFor(model => model.Id)
+                                @Html.HiddenFor(model => model.IsActive)
+                                @Html.HiddenFor(model => model.ArticleContent)
+                               
+                                @for (var i = 0; i < Model.Questions.Count(); i++)
+                                {   
+                                    @Html.HiddenFor(model => Model.Questions[i].QuestionText)       
+                                    @Html.HiddenFor(model => Model.Questions[i].AnswerText)
+                                }
+                            </div>
+                        </div>
+                        <hr />
+                        <div class="ess-primary-question">
+                            <div class="row">
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <div class="response">
+                                            <h1 class="port-corporate-text">Edit Story</h1>
+                                            <div class="ess-primary-question">
+                                                <div class="row">
+                                                    <div class="col-sm-12">
+                                                        <div id="questions">
+                                                            <ckeditor v-model="data"></ckeditor>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            }
+        }
+        else
+        {
+            <h2> Either there was an issue loading the questions or there are currently no questions to display.</h2>
+            <h3> Please contact the POP Digital Team if you beleive this is in error or if you would like any further information.</h3>
+        }
+    </div>
+</div>
+<script type="text/x-template" id="ckEditor">
+    <div class="ck-editor">
+        <div class="attachment-view" v-if="attachment">
+            <img :id="attachmentContainer" class="img-responsive" :href="attachment" alt="thumbnail image" />
+        </div>
+        @* CKEditor full-size *@
+        <div class="editor">
+            <textarea class="form-control" name="editor" :id="editorId" v-html="content"></textarea>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="btn-group-inline pull-right">
+                    <button type="submit" class="btn btn-success" id="ess-story-edit-save-btn"><span class="glyphicon glyphicon-check"></span> Save</button>
+                    <button type="button" @@click="revertChanges" class="btn btn-danger" id="ess-revert-btn"><span class="glyphicon glyphicon-remove"></span> Revert</button>
+                </div>
+            </div>
+        </div>
+        @* temp placeholder for attachments *@
+        <input type="text" :id="tempUrl" value="" hidden />
+        @* azure content upload window *@
+        <div :id="azureId"></div>
+    </div>
+</script>
+@{Html.RenderPartial("Modals/_SelectEmployeeModal", employees);}
+@section Scripts{
+    @Scripts.Render("~/bundles/ckeditor")
+    @Scripts.Render("~/bundles/blockUI")
+    @Scripts.Render("~/bundles/vue")
+    @Scripts.Render("~/bundles/modernizr")
+    @Scripts.Render("~/Scripts/port-utilities.js")
+    @Scripts.Render("~/Scripts/port-equitystories.js")
+    @Scripts.Render("~/Scripts/port-equity-admin.js")
+    @Scripts.Render("~/bundles/port-azure-storage-core")
+    @Scripts.Render("~/bundles/port-azure-storage-picker")
+    @Scripts.Render("~/bundles/lodash")
+    <script type="text/javascript">
+        
+    $(function () {
+        var model = new Vue({
+            el: '#questions',
+            data: function () {
+                return {
+                    data: '@Html.Raw(Model.ArticleContent)'
+                }
+            },
+            components: {
+                'ckeditor': {
+                    props: ["thumbnail-url", "value"],
+                    data: function () {
+                        return {
+                            uploadUrl: "/Media/UploadFromCkEditor?container=equity-story-images",
+                            container: "equity-story-images",
+                            attachId: "chart-attachment-",
+                            attachmentContainer: "equity-thumbnail",
+                            height: 450,
+                            content: "",
+                            opts: null,
+                            instance: null,
+                            html: null,
+                            ckeditor: null,
+                            azureId: "thumbnail-picker",
+                            btnId: "editor",
+                            tempUrl: "",
+                            editorId: "cKEditor",
+                            attachment: null,
+                            attachmentName: "",
+                            formsubmitbtn: "edit-story-form"
+                        }
+                    },
+                    methods: {
+                        initVariables: function() {
+                            var self = this;
+                            
+                            self.attachment = self.thumbnailUrl;
+                            self.content = _.cloneDeep(self.value);
+                        },
+                        initAzure: function() {
+                            var self = this;
+
+                            $("#" + self.azureId).AzureStoragePicker({
+                                pickerOpenButtonElement: $("#" + self.btnId),
+                                okButtonText: "Select",
+                                defaultContainer: self.container,
+                                title: "Choose File",
+                                upload: true,
+                                singlePick: true,
+                                rootAccess: false,
+                                selected: function(event, data) {
+                                    if (data.blobs.length) {
+                                        self.updateAttachment(data.blobs[0].url, data.blobs[0].name); 
+                                    }
+                                }
+                            });
+                        },
+                        initCkEditor: function () {
+                            var self = this;
+
+                            self.instance = CKEDITOR.replace(self.editorId,
+                                {
+                                    customConfig: "@Url.Content("~/Scripts/ckeditor/config-full.js")",
+                                    imageUploadUrl: self.uploadUrl,
+                                    azureBlobContainer: self.container,
+                                    height: self.height,
+                                    pasteFilter: self.filter
+                                })
+                            self.instance.on('change',
+                                function (data) {
+                                    if (self.ckeditor !== null) {
+                                        var val = self.ckeditor.getData();
+                                        self.html = val;
+                                        self.content = val;
+                                        self.$emit("input", val);
+                                    }
+                                    else {
+                                        return;
+                                    }
+                                    
+                                });
+                        },
+                        updateAttachment: function(thumbnailUrl, name) {
+                            var self = this;
+                            self.attachment = thumbnailUrl;
+                            self.attachmentName = name;
+                            var $image = $("img#" + self.attachmentContainer);
+
+                            var $downloadingImage = $("<img>");
+
+                            $downloadingImage.load(function() {
+                                $image.attr("src", $(self).attr("src"));
+                                $image.attr("title", name);
+                                $image.attr("alt", name);
+                            });
+
+                            $downloadingImage.attr("src", thumbnailUrl);
+
+                            $("#" + self.tempUrl).val(thumbnailUrl);
+                        },
+                        revertChanges: function () {
+                            var self = this;
+
+                            CKEDITOR.instances[self.editorId].setData(self.value);
+                        }
+                    },
+                    template: '#ckEditor',
+                    created: function () {
+                        var self = this;
+                        self.html = self.value;
+                        self.opts = self.options;
+                        self.initVariables();
+                        if (!self.opts) {
+                            self.opts = new Object();
+                        }
+                        self.opts.on = {
+                            change: function () {
+                                // keep the changed content around so that we can figure out whether the value changed externally or not
+                                var val = self.instance.getData();
+                                self.html = val;
+                                self.$emit("input", val);
+                            }
+                        }
+                    },
+                    mounted: function () {
+                        var self = this;
+                        self.initCkEditor();
+                        self.initAzure();
+                        $("#" + self.formsubmitbtn).submit(function (evt) {
+                            $("#ArticleContent").val(self.instance.getData());
+                        });
+                    },
+                    destroyed: function () {
+
+                    },
+                    watch: {
+                        value: function (newVal) {
+                            // if the value is different than the internally tracked value, it was changed externally
+                            if (newVal !== this.html) {
+                                this.instance.setData(newVal);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+    $(document).ready(function() {
+        var resizetextareas = document.getElementsByClassName('edit');
+        for (var i = 0; i < resizetextareas.length; i++) {
+            resizetextareas[i].rows = resizetextareas[i].scrollHeight / 18;
+        }
+        $("form").submit(function(ev) {
+            if ($("#Description").val().length > 150) {
+                ev.preventDefault();
+                $(".description").text("Warning, you have reached over 150 characters. Please reduce the text to continue.");
+                Messenger().post({
+                    message: "Please shorten your description to 150 characters in order to continue",
+                    type: 'error'
+                })
+            }
+        });
+    });
+    </script>
+}

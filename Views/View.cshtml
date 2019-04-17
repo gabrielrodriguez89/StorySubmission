@@ -1,0 +1,85 @@
+﻿@using Navigator.Contracts.Models
+@using Navigator.Client.Helpers
+
+@model EquityStoryContract
+
+@{
+
+    ViewBag.ActionLink = Html.ActionLink("Equity Stories", Html.IsAdministrator(Config.ESSMods) ? "Admin" : "Index", "EquityStories");
+    ViewBag.Title = "Equity Stories";
+    ViewBag.BannerClass = "port-land-background";
+    Layout = "~/Views/Shared/_LayoutSecondaryPages.cshtml";
+}
+
+@section styles{
+<style type="text/css">
+    .title h2{
+        font-size: 30px;
+        margin-bottom: 20px;
+        color: black;
+        font-weight: normal;
+
+    }
+    .view-heading {
+        padding: 10px 0 0 20px;
+    }
+    .btn-group {
+        margin-top: 20px;
+    }
+    .ess-contact {
+        margin-bottom: 0;
+    }
+    .content-body {
+        text-align: left;
+    }
+    .view-heading img{
+        flex:auto;
+        max-height: 120px;
+        width: auto;
+    }
+    @@media (max-width: 767px) {
+        .view-heading img {
+            display: none;
+        }
+    }
+</style>
+
+}
+
+<div class="row view-heading">
+    <div class="col-sm-11">
+        <nav class="nav sub-nav">
+            <div class="btn-group">
+                <button onclick="window.history.back();"class="btn btn-info">
+                    <span class="fa fa-caret-left"></span><span> Back</span>
+                </button>
+            </div>
+        </nav>
+        <div class="col-md-1 pull-right ">
+            <img class="" src="@Url.Action("EmployeePhoto", "Media", new { id = Model.UserName })" alt="User Image" />
+        </div>
+        <div class="pull-left">
+            <div class="title"><h2>@Model.Title</h2></div>
+            <div class="ess-contact">
+                @*For more information please contact <a href="~/Resources/Directory#/e/@Model.SelectedStory.UserName">@Model.SelectedStory.ContactName</a>*@
+                For more information please contact <a href="@Url.Action("Directory", "Resources")#/e/@Model.UserName">@Model.ContactName</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+<div class="row">
+    <hr />
+    <div class="col-sm-11 pull-left ">
+        <div class="content-body">
+            @Html.Raw(Model.ArticleContent)
+            @*@foreach (var question in Model.Questions)
+            {
+                <div>
+                    <h3><strong>@question.QuestionText</strong></h3>
+                    <p>@question.AnswerText</p>
+                </div>
+            }*@
+        </div>
+    </div>
+</div>
